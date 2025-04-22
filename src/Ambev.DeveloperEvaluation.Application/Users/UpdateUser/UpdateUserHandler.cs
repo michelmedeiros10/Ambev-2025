@@ -27,9 +27,9 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UpdateUserRe
 	/// <param name="passwordHasher">The PasswordHasher instance</param>
 	/// <param name="eventBus">The EventBus instance</param>
 	public UpdateUserHandler(
-		IUserRepository userRepository, 
-		IMapper mapper, 
-		IPasswordHasher passwordHasher, 
+		IUserRepository userRepository,
+		IMapper mapper,
+		IPasswordHasher passwordHasher,
 		IEventBus eventBus)
 	{
 		_userRepository = userRepository;
@@ -67,6 +67,12 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UpdateUserRe
 
 		var updatedUser = _userRepository.Update(existUser);
 		var result = _mapper.Map<UpdateUserResult>(updatedUser);
+
+		//TODO: Create DTOs to avoid cycle serialization
+		if (updatedUser.Name != null)
+			updatedUser.Name.User = null;
+		if (updatedUser.Address != null)
+			updatedUser.Address.User = null;
 
 		//Create the event
 		var ev = new UserUpdatedEvent(updatedUser)

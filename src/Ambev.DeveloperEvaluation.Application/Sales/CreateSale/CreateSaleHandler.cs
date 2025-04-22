@@ -24,8 +24,8 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
 	/// <param name="saleRepository">The sale repository</param>
 	/// <param name="mapper">The AutoMapper instance</param>
 	public CreateSaleHandler(
-		ISaleRepository saleRepository, 
-		IMapper mapper, 
+		ISaleRepository saleRepository,
+		IMapper mapper,
 		IEventBus eventBus)
 	{
 		_saleRepository = saleRepository;
@@ -109,6 +109,10 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
 		var createdSale = await _saleRepository.CreateAsync(sale, cancellationToken);
 
 		var result = _mapper.Map<CreateSaleResult>(createdSale);
+
+		//TODO: Create DTOs to avoid cycle serialization
+		createdSale.Customer = null;
+		createdSale.Products.ForEach(p => { p.Product = null; p.Sale = null; });
 
 		//Create the event
 		var ev = new SaleRegisteredEvent(sale)

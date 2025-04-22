@@ -14,10 +14,10 @@ namespace Ambev.DeveloperEvaluation.Application.Users.CreateUser;
 /// </summary>
 public class CreateUserHandler : IRequestHandler<CreateUserCommand, CreateUserResult>
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IMapper _mapper;
-    private readonly IPasswordHasher _passwordHasher;
-    private readonly IEventBus _eventBus;
+	private readonly IUserRepository _userRepository;
+	private readonly IMapper _mapper;
+	private readonly IPasswordHasher _passwordHasher;
+	private readonly IEventBus _eventBus;
 
 	/// <summary>
 	/// Initializes a new instance of CreateUserHandler
@@ -44,33 +44,39 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, CreateUserRe
 	/// <param name="cancellationToken">Cancellation token</param>
 	/// <returns>The created user details</returns>
 	public async Task<CreateUserResult> Handle(CreateUserCommand command, CancellationToken cancellationToken)
-    {
+	{
 		var existingUser = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
 		if (existingUser != null)
 			throw new InvalidOperationException($"User with email '{command.Email}' already exists");
-		
-        var validator = new CreateUserCommandValidator();
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
 
-        if (!validationResult.IsValid)
-            throw new ValidationException(validationResult.Errors);
+		var validator = new CreateUserCommandValidator();
+		var validationResult = await validator.ValidateAsync(command, cancellationToken);
 
-        var user = _mapper.Map<User>(command);
-        user.Password = _passwordHasher.HashPassword(command.Password);
+		if (!validationResult.IsValid)
+			throw new ValidationException(validationResult.Errors);
 
-        var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
-        var result = _mapper.Map<CreateUserResult>(createdUser);
+		var user = _mapper.Map<User>(command);
+		user.Password = _passwordHasher.HashPassword(command.Password);
+
+		var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
+		var result = _mapper.Map<CreateUserResult>(createdUser);
+
+		//TODO: Create DTOs to avoid cycle serialization
+		if (user.Name != null)
+			user.Name.User = null;
+		if (user.Address != null)
+			user.Address.User = null;
 
 		//Create the event
-		var ev = new UserRegisteredEvent(user) 
-		{ 
-			Oid = Guid.Empty, 
-			Sid = Guid.NewGuid() 
+		var ev = new UserRegisteredEvent(user)
+		{
+			Oid = Guid.Empty,
+			Sid = Guid.NewGuid()
 		};
 
 		//Publish the event
 		await _eventBus.PublishAsync(ev, cancellationToken);
 
 		return result;
-    }
+	}
 }

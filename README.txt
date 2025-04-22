@@ -21,6 +21,11 @@ Passo a passo para rodar a aplicação e efetuar os testes integrados:
 
 8- Consultar tabela Products para verificar as baixas de estoque
 
+9- Para acompanhar os eventos gerados, segue abaixo os dados de acesso:
+https://console.hivemq.cloud/clusters/8b7478c7cd2e4193827e89f0aa0e45d2/web-client
+username: michelmedeiros10
+password: 4Mb3v@2025
+
 
 
 
